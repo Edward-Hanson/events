@@ -45,9 +45,7 @@ jobs:
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Build SAM application
-        run: |
-          cd events
-          sam build --use-container
+        run: sam build --use-container
 
       - name: Deploy to Development
         run: |
@@ -81,9 +79,7 @@ jobs:
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Build SAM application
-        run: |
-          cd events
-          sam build --use-container
+        run: sam build --use-container
 
       - name: Deploy to Production
         run: |
