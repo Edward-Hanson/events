@@ -43,7 +43,7 @@ resolve_s3 = true
 region = "eu-west-1"
 parameter_overrides = [
     "Environment=dev",
-    "NotificationEmailAddress=ehanson787@gmail.com",
+    "NotificationEmailAddress=edward.mensah@amalitech.com",
     "BucketName=upload-notification-bucket-dev"
 ]
 tags = [

@@ -50,8 +50,9 @@ jobs:
       - name: Deploy to Development
         run: sam deploy \
             --config-env dev \
-            --no-confirm-changeset \
+            --confirm-changeset \
             --no-fail-on-empty-changeset
+            --parameter-overrides Environment=dev
           
 
   deploy-prod:
@@ -79,8 +80,12 @@ jobs:
         run: sam build --use-container
 
       - name: Deploy to Production
-        run: sam deploy \
+        run: |
+          sam deploy \
             --config-env prod \
             --confirm-changeset \
-            --no-fail-on-empty-changeset
-          
+            --no-fail-on-empty-changeset \
+            --parameter-overrides Environment=prod
+
+      - name: Debug parameters
+        run: sam deploy --config-env prod --dry-run
