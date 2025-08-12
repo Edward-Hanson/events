@@ -1,0 +1,180 @@
+import json
+import boto3
+import os
+from datetime import datetime
+from urllib.parse import unquote_plus
+
+# Initialize AWS clients outside the handler for connection reuse
+sns_client = boto3.client('sns')
+s3_client = boto3.client('s3')
+
+def lambda_handler(event, context):
+    """
+    AWS Lambda: Triggered by S3 ObjectCreated events.
+    Fetches object metadata and sends an SNS notification to subscribers.
+    """
+
+    # Environment variables from SAM template
+    sns_topic_arn = os.environ.get('SNS_TOPIC_ARN')
+    environment = os.environ.get('ENVIRONMENT', 'dev')
+
+    if not sns_topic_arn:
+        log_error("SNS_TOPIC_ARN environment variable is missing.")
+        return error_response("SNS topic ARN not configured", 500)
+
+    log_info("Received event: " + json.dumps(event))
+
+    # Validate and process S3 event records
+    try:
+        if "Records" not in event or not event["Records"]:
+            return error_response("No S3 event records found", 400)
+
+        for record in event["Records"]:
+            if "s3" not in record or "bucket" not in record["s3"] or "object" not in record["s3"]:
+                log_error("Malformed S3 event record: " + json.dumps(record))
+                continue
+
+            bucket_name = record["s3"]["bucket"]["name"]
+            object_key = unquote_plus(record["s3"]["object"]["key"])
+            object_size = record["s3"]["object"].get("size", 0)
+            event_time = record.get("eventTime", "Unknown")
+            event_name = record.get("eventName", "Unknown")
+
+            log_info(f"Processing {event_name} for object: {object_key} in bucket: {bucket_name}")
+
+            # Get additional metadata from S3
+            last_modified, content_type = fetch_object_metadata(bucket_name, object_key)
+
+            # Format file size
+            file_size_formatted = format_file_size(object_size)
+
+            # Create notification message
+            message = create_notification_message(
+                bucket_name=bucket_name,
+                object_key=object_key,
+                file_size=file_size_formatted,
+                event_time=event_time,
+                event_name=event_name,
+                last_modified=last_modified,
+                content_type=content_type,
+                environment=environment
+            )
+
+            subject = f"[{environment.upper()}] S3 Upload: {object_key}"
+
+            # Publish SNS message
+            try:
+                response = sns_client.publish(
+                    TopicArn=sns_topic_arn,
+                    Message=message,
+                    Subject=subject
+                )
+                log_info(f"SNS notification sent successfully. MessageId: {response['MessageId']}")
+            except Exception as e:
+                log_error(f"Failed to publish SNS message: {e}")
+                raise
+
+    except Exception as e:
+        log_error(f"Unhandled error: {e}")
+        return error_response(f"Error processing event: {str(e)}", 500)
+
+    return success_response("S3 event processed and notification sent.")
+
+
+def fetch_object_metadata(bucket_name, object_key):
+    """
+    Safely fetch object metadata from S3.
+    Returns (last_modified, content_type) or ('Unknown', 'Unknown') if failed.
+    """
+    try:
+        head_resp = s3_client.head_object(Bucket=bucket_name, Key=object_key)
+        last_modified = head_resp.get("LastModified", "Unknown")
+        content_type = head_resp.get("ContentType", "Unknown")
+        return last_modified, content_type
+    except Exception as e:
+        log_error(f"Could not retrieve metadata for {object_key}: {e}")
+        return "Unknown", "Unknown"
+
+
+def format_file_size(size_bytes):
+    """
+    Convert bytes into a human-readable size string.
+    """
+    if not isinstance(size_bytes, (int, float)) or size_bytes < 0:
+        return "Unknown"
+
+    if size_bytes == 0:
+        return "0 B"
+
+    size_names = ["B", "KB", "MB", "GB", "TB"]
+    i = 0
+    size = float(size_bytes)
+
+    while size >= 1024 and i < len(size_names) - 1:
+        size /= 1024.0
+        i += 1
+
+    return f"{size:.2f} {size_names[i]}"
+
+
+def create_notification_message(bucket_name, object_key, file_size, event_time,
+                                 event_name, last_modified, content_type, environment):
+    """
+    Create a detailed, formatted notification message for SNS.
+    """
+    # Format event_time
+    formatted_time = try_format_datetime(event_time)
+    formatted_last_modified = try_format_datetime(last_modified)
+
+    message = f"""
+🔔 S3 Upload Notification - {environment.upper()} Environment
+
+A new file has been uploaded to your S3 bucket:
+
+📁 Bucket: {bucket_name}
+📄 File: {object_key}
+📊 Size: {file_size}
+🗂️ Content Type: {content_type}
+⚡ Event: {event_name}
+🕐 Upload Time: {formatted_time}
+📅 Last Modified: {formatted_last_modified}
+
+This notification was automatically generated by the S3 upload monitoring system.
+
+---
+Environment: {environment}
+AWS Region: {os.environ.get('AWS_REGION', 'Unknown')}
+Lambda Function: {os.environ.get('AWS_LAMBDA_FUNCTION_NAME', 'Unknown')}
+    """.strip()
+
+    return message
+
+
+def try_format_datetime(dt_value):
+    """
+    Try to format a datetime or ISO8601 string to 'YYYY-MM-DD HH:MM:SS UTC'.
+    """
+    try:
+        if isinstance(dt_value, datetime):
+            return dt_value.strftime("%Y-%m-%d %H:%M:%S UTC")
+        if isinstance(dt_value, str):
+            return datetime.fromisoformat(dt_value.replace("Z", "+00:00")).strftime("%Y-%m-%d %H:%M:%S UTC")
+    except Exception:
+        pass
+    return str(dt_value)
+
+
+def log_info(message):
+    print(f"[INFO] {message}")
+
+
+def log_error(message):
+    print(f"[ERROR] {message}")
+
+
+def success_response(body):
+    return {"statusCode": 200, "body": json.dumps(body)}
+
+
+def error_response(body, code):
+    return {"statusCode": code, "body": json.dumps(body)}

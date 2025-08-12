@@ -1,0 +1,98 @@
+name: Deploy S3 Notification App
+
+on:
+  push:
+    branches:
+      - master
+      - develop
+
+env:
+  SAM_CLI_TELEMETRY: 0
+  AWS_REGION: eu-west-1
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up SAM CLI
+        uses: aws-actions/setup-sam@v2
+
+      - name: Validate SAM template
+        run: |
+          cd events
+          sam validate --lint
+
+  deploy-dev:
+    runs-on: ubuntu-latest
+    needs: validate
+    if: github.ref == 'refs/heads/develop'
+    environment: development
+    permissions:
+      id-token: write    
+      contents: read      
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up SAM CLI
+        uses: aws-actions/setup-sam@v2
+
+      - name: Configure AWS credentials via OIDC
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::343218213563/GitHubActionsSAMDeployRole
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Build SAM application
+        run: |
+          cd events
+          sam build --use-container
+
+      - name: Deploy to Development
+        run: |
+          cd events
+          sam deploy \
+            --config-env dev \
+            --parameter-overrides \
+              NotificationEmailAddress=${{ secrets.DEV_NOTIFICATION_EMAIL }} \
+            --no-confirm-changeset \
+            --no-fail-on-empty-changeset
+
+  deploy-prod:
+    runs-on: ubuntu-latest
+    needs: validate
+    if: github.ref == 'refs/heads/master'
+    environment: production
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up SAM CLI
+        uses: aws-actions/setup-sam@v2
+
+      - name: Configure AWS credentials via OIDC
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::343218213563:role/GitHubActionsSAMDeployRole
+          aws-region: ${{ env.AWS_REGION }}
+
+      - name: Build SAM application
+        run: |
+          cd events
+          sam build --use-container
+
+      - name: Deploy to Production
+        run: |
+          cd events
+          sam deploy \
+            --config-env prod \
+            --parameter-overrides \
+              NotificationEmailAddress=${{ secrets.PROD_NOTIFICATION_EMAIL }} \
+            --confirm-changeset \
+            --no-fail-on-empty-changeset

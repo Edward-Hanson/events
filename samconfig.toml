@@ -1,0 +1,74 @@
+# SAM Configuration file for different environments
+
+version = 0.1
+
+[default]
+[default.global.parameters]
+stack_name = "s3-notification-app"
+
+[default.build.parameters]
+cached = true
+parallel = true
+
+[default.validate.parameters]
+lint = true
+
+[default.deploy.parameters]
+capabilities = "CAPABILITY_IAM"
+confirm_changeset = false
+resolve_s3 = true
+region = "eu-west-1"
+
+[default.package.parameters]
+resolve_s3 = true
+
+[default.sync.parameters]
+watch = true
+
+[default.local_start_api.parameters]
+warm_containers = "EAGER"
+
+[default.local_start_lambda.parameters]
+warm_containers = "EAGER"
+
+# Development environment configuration
+[dev]
+[dev.global.parameters]
+stack_name = "s3-notification-app-dev"
+
+[dev.deploy.parameters]
+capabilities = "CAPABILITY_IAM"
+confirm_changeset = false
+resolve_s3 = true
+region = "eu-west-1"
+parameter_overrides = [
+    "Environment=dev",
+    "NotificationEmailAddress=ehanson787@gmail.com",
+    "BucketName=upload-notification-bucket"
+]
+tags = [
+    "Environment=dev",
+    "Project=S3NotificationApp",
+    "Owner=DevTeam"
+]
+
+# Production environment configuration
+[prod]
+[prod.global.parameters]
+stack_name = "s3-notification-app-prod"
+
+[prod.deploy.parameters]
+capabilities = "CAPABILITY_IAM"
+confirm_changeset = true
+resolve_s3 = true
+region = "eu-west-1"
+parameter_overrides = [
+    "Environment=prod",
+    "NotificationEmailAddress=ehanson787@gmail.com",
+    "BucketName=upload-notification-bucket"
+]
+tags = [
+    "Environment=prod",
+    "Project=S3NotificationApp",
+    "Owner=ProdTeam"
+]
