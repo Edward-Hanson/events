@@ -50,7 +50,7 @@ jobs:
       - name: Deploy to Development
         run: sam deploy \
             --config-env dev \
-            --confirm-changeset \
+            --no-confirm-changeset \
             --no-fail-on-empty-changeset
             --parameter-overrides Environment=dev
           
@@ -83,7 +83,7 @@ jobs:
         run: |
           sam deploy \
             --config-env prod \
-            --confirm-changeset \
+            --no-confirm-changeset \
             --no-fail-on-empty-changeset \
             --parameter-overrides Environment=prod
 
