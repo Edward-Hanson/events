@@ -87,5 +87,3 @@ jobs:
             --no-fail-on-empty-changeset \
             --parameter-overrides Environment=prod
 
-      - name: Debug parameters
-        run: sam deploy --config-env prod --dry-run
