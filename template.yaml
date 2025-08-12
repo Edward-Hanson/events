@@ -44,6 +44,21 @@ Resources:
           - ServerSideEncryptionByDefault:
               SSEAlgorithm: AES256
 
+  # SNS Topic for notifications
+  NotificationTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      TopicName: !Sub "${Environment}-s3-upload-notifications"
+      DisplayName: !Sub "S3 Upload Notifications - ${Environment}"
+
+  # SNS Subscription for email notifications
+  EmailSubscription:
+    Type: AWS::SNS::Subscription
+    Properties:
+      Protocol: email
+      TopicArn: !Ref NotificationTopic
+      Endpoint: !Ref NotificationEmailAddress
+
   # Lambda function to process S3 events
   S3NotificationFunction:
     Type: AWS::Serverless::Function
@@ -59,8 +74,6 @@ Resources:
       Policies:
         - SNSPublishMessagePolicy:
             TopicName: !GetAtt NotificationTopic.TopicName
-        - S3ReadPolicy:
-            BucketName: !Ref UploadBucket
       Events:
         S3Event:
           Type: S3
@@ -68,20 +81,22 @@ Resources:
             Bucket: !Ref UploadBucket
             Events: s3:ObjectCreated:*
 
-  # SNS Topic for notifications
-  NotificationTopic:
-    Type: AWS::SNS::Topic
+  S3ReadAccessPolicy:
+    Type: AWS::IAM::Policy
     Properties:
-      TopicName: !Sub "${Environment}-s3-upload-notifications"
-      DisplayName: !Sub "S3 Upload Notifications - ${Environment}"
-
-  # SNS Subscription for email notifications
-  EmailSubscription:
-    Type: AWS::SNS::Subscription
-    Properties:
-      Protocol: email
-      TopicArn: !Ref NotificationTopic
-      Endpoint: !Ref NotificationEmailAddress
+      PolicyName: !Sub "${Environment}-s3-read-access"
+      Roles:
+        - !Ref S3NotificationFunctionRole
+      PolicyDocument:
+        Version: '2012-10-17'
+        Statement:
+          - Effect: Allow
+            Action:
+              - s3:GetObject
+              - s3:ListBucket
+            Resource:
+              - !Sub "arn:aws:s3:::${Environment}-${BucketName}-${AWS::AccountId}"
+              - !Sub "arn:aws:s3:::${Environment}-${BucketName}-${AWS::AccountId}/*"
 
   # CloudWatch Log Group for Lambda function
   S3NotificationFunctionLogGroup:
