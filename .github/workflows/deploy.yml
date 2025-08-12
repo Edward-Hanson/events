@@ -21,9 +21,7 @@ jobs:
         uses: aws-actions/setup-sam@v2
 
       - name: Validate SAM template
-        run: |
-          cd events
-          sam validate --lint
+        run: sam validate --lint
 
   deploy-dev:
     runs-on: ubuntu-latest
