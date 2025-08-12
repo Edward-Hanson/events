@@ -38,7 +38,7 @@ stack_name = "s3-notification-app-dev"
 
 [dev.deploy.parameters]
 capabilities = "CAPABILITY_IAM"
-confirm_changeset = false
+confirm_changeset = true
 resolve_s3 = true
 region = "eu-west-1"
 parameter_overrides = [
