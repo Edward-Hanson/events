@@ -66,7 +66,7 @@ Resources:
       FunctionName: !Sub "${Environment}-s3-notification-handler"
       CodeUri: src/
       Handler: lambda_function.lambda_handler
-      Description: Processes S3 upload events and sends SNS notifications
+      Description: !Sub "Processes S3 upload events and sends SNS notifications - ${Environment}"
       Environment:
         Variables:
           ENVIRONMENT: !Ref Environment
@@ -81,10 +81,11 @@ Resources:
             Bucket: !Ref UploadBucket
             Events: s3:ObjectCreated:*
 
+  # IAM Policy for S3 Read Access
   S3ReadAccessPolicy:
     Type: AWS::IAM::Policy
     Properties:
-      PolicyName: !Sub "${Environment}-s3-read-access"
+      PolicyName: !Sub "${Environment}-s3-read-access-policy"
       Roles:
         - !Ref S3NotificationFunctionRole
       PolicyDocument:
@@ -111,21 +112,16 @@ Outputs:
     Value: !Ref UploadBucket
     Export:
       Name: !Sub "${AWS::StackName}-S3BucketName"
-
-  LambdaFunctionArn:
-    Description: ARN of the Lambda function
-    Value: !GetAtt S3NotificationFunction.Arn
-    Export:
-      Name: !Sub "${AWS::StackName}-LambdaFunctionArn"
-
+  
   SNSTopicArn:
-    Description: ARN of the SNS topic
+    Description: ARN of the SNS Topic
     Value: !Ref NotificationTopic
     Export:
       Name: !Sub "${AWS::StackName}-SNSTopicArn"
-
-  Environment:
-    Description: Environment name
-    Value: !Ref Environment
+  
+  LambdaFunctionName:
+    Description: Name of the Lambda function
+    Value: !Ref S3NotificationFunction
     Export:
-      Name: !Sub "${AWS::StackName}-Environment"
+      Name: !Sub "${AWS::StackName}-LambdaFunctionName"
+      
