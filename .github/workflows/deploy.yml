@@ -48,14 +48,13 @@ jobs:
         run: sam build --use-container
 
       - name: Deploy to Development
-        run: |
-          cd events
-          sam deploy \
+        run: sam deploy \
             --config-env dev \
             --parameter-overrides \
               NotificationEmailAddress=${{ secrets.DEV_NOTIFICATION_EMAIL }} \
             --no-confirm-changeset \
             --no-fail-on-empty-changeset
+          
 
   deploy-prod:
     runs-on: ubuntu-latest
@@ -82,11 +81,10 @@ jobs:
         run: sam build --use-container
 
       - name: Deploy to Production
-        run: |
-          cd events
-          sam deploy \
+        run: sam deploy \
             --config-env prod \
             --parameter-overrides \
               NotificationEmailAddress=${{ secrets.PROD_NOTIFICATION_EMAIL }} \
             --confirm-changeset \
             --no-fail-on-empty-changeset
+          
