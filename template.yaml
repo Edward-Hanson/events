@@ -101,19 +101,6 @@ Resources:
       RetentionInDays: 14
 
 Outputs:
-  BucketName:
-    Description: The name of the S3 upload bucket
-    Value: !Ref UploadBucket
-
-  SNSTopicArn:
-    Description: SNS Topic ARN used for notifications
-    Value: !Ref NotificationTopic
-
-  LambdaFunctionName:
-    Description: Lambda function name for S3 notifications
-    Value: !Ref S3NotificationFunction
-
-Outputs:
   S3BucketName:
     Description: Name of the S3 bucket
     Value: !Ref UploadBucket
