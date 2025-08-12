@@ -2,7 +2,7 @@ version = 0.1
 
 [default]
 [default.global.parameters]
-stack_name = "s3-notification-app_dev"
+stack_name = "s3-notification-app-dev"
 
 [default.build.parameters]
 cached = true
