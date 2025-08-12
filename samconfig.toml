@@ -44,7 +44,7 @@ region = "eu-west-1"
 parameter_overrides = [
     "Environment=dev",
     "NotificationEmailAddress=ehanson787@gmail.com",
-    "BucketName=upload-notification-bucket"
+    "BucketName=upload-notification-bucket-dev"
 ]
 tags = [
     "Environment=dev",
@@ -55,7 +55,7 @@ tags = [
 # Production environment configuration
 [prod]
 [prod.global.parameters]
-stack_name = "s3-notification-app-prod"
+stack_name = "s3-notification-app"
 
 [prod.deploy.parameters]
 capabilities = "CAPABILITY_IAM"

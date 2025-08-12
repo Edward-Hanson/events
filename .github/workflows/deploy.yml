@@ -41,7 +41,7 @@ jobs:
       - name: Configure AWS credentials via OIDC
         uses: aws-actions/configure-aws-credentials@v4
         with:
-          role-to-assume: arn:aws:iam::343218213563/GitHubActionsSAMDeployRole
+          role-to-assume: arn:aws:iam::343218213563:role/GitHubActionsSAMDeployRole
           aws-region: ${{ env.AWS_REGION }}
 
       - name: Build SAM application
@@ -50,8 +50,6 @@ jobs:
       - name: Deploy to Development
         run: sam deploy \
             --config-env dev \
-            --parameter-overrides \
-              NotificationEmailAddress=${{ secrets.DEV_NOTIFICATION_EMAIL }} \
             --no-confirm-changeset \
             --no-fail-on-empty-changeset
           
@@ -83,8 +81,6 @@ jobs:
       - name: Deploy to Production
         run: sam deploy \
             --config-env prod \
-            --parameter-overrides \
-              NotificationEmailAddress=${{ secrets.PROD_NOTIFICATION_EMAIL }} \
             --confirm-changeset \
             --no-fail-on-empty-changeset
           
