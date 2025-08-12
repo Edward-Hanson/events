@@ -2,7 +2,7 @@ version = 0.1
 
 [default]
 [default.global.parameters]
-stack_name = "s3-notification-app"
+stack_name = "s3-notification-app_dev"
 
 [default.build.parameters]
 cached = true
@@ -41,7 +41,7 @@ resolve_s3 = true
 region = "eu-west-1"
 parameter_overrides = [
     "Environment=dev",
-    "NotificationEmailAddress=ehanson787@gmail.com",
+    "NotificationEmailAddress=edward.mensah@amalitech.com",
     "BucketName=upload-notification-bucket"
 ]
 tags = [
