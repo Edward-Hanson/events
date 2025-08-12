@@ -13,7 +13,7 @@ Parameters:
   NotificationEmailAddress:
     Type: String
     Description: Email address to receive notifications
-    Default: ehanson787@gmail.com
+    Default: edward.mensah@amalitech.com
   
   BucketName:
     Type: String
